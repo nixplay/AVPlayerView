@@ -64,13 +64,14 @@
     _playerContentView = [[AVPlayerContentView alloc] init];
     _playerContentView.delegate = self;
     [_playerContentView setTranslatesAutoresizingMaskIntoConstraints:NO];
-
+    
+    
     UIImageView *imageView = [[UIImageView alloc] init];
     [imageView setTranslatesAutoresizingMaskIntoConstraints:NO];
     [imageView setContentMode:UIViewContentModeScaleAspectFit];
     [self addSubview:imageView toSuperView:_playerContentView edge:UIEdgeInsetsZero];
     _playerContentView.thumbnailView = imageView;
-
+    
     AVPlayerControlView *controlView = [AVPlayerControlView getControlView];
     [self addSubview:controlView toSuperView:_playerContentView edge:UIEdgeInsetsZero];
     _playerContentView.controlView = controlView;
@@ -260,16 +261,28 @@
 - (void)fullSizeMode
 {
     self.playerContentView.isFullSize = YES;
-
+    
     UIWindow *window = [[UIApplication sharedApplication] keyWindow];
     window.windowLevel = UIWindowLevelStatusBar;
-    [self addSubview:self.playerContentView toSuperView:window edge:UIEdgeInsetsZero];
+    
+    UIEdgeInsets edgeInsets = UIEdgeInsetsZero;
+    if(@available(iOS 11, *)){
+        UIEdgeInsets safeAreaInsets = window.rootViewController.view.safeAreaInsets;
+        if(UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation)){
+            edgeInsets.left = safeAreaInsets.left;
+            edgeInsets.right = -safeAreaInsets.right;
+        }else{
+            edgeInsets.top = safeAreaInsets.top;
+            edgeInsets.bottom = -safeAreaInsets.bottom;
+        }
+    }
+    [self addSubview:self.playerContentView toSuperView:window edge:edgeInsets];
     [window layoutIfNeeded];
-
+    
     CGRect rect = [self.superview convertRect:self.frame toView:window];
     self.playerContentView.frame = rect;
     self.playerContentView.controlView.alpha = 0;
-
+    
     if (self.dimmedEffect == false) {
         self.playerContentView.backgroundColor = self.backgroundColorForFullSize;
     }
@@ -292,26 +305,42 @@
 
 - (void)orientationChanged:(NSNotification *)notification
 {
+    UIView *superView = [self.playerContentView superview];
+    UIEdgeInsets edgeInsets = UIEdgeInsetsZero;
+    if(@available(iOS 11, *)){
+        UIEdgeInsets safeAreaInsets = superView.safeAreaInsets;
+        if(UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation)){
+            edgeInsets.left = safeAreaInsets.left;
+            edgeInsets.right = -safeAreaInsets.right;
+        }else{
+            edgeInsets.top = safeAreaInsets.top;
+            edgeInsets.bottom = -safeAreaInsets.bottom;
+        }
+        
+        
+    }
+    [self addSubview:self.playerContentView toSuperView:superView edge:edgeInsets];
+    
     if ([self needToForceChangeOrientation] == false) {
         [self rallbackScreenIfNeeded];
         return;
     }
     
     UIDeviceOrientation orientation = [[UIDevice currentDevice] orientation];
-    UIView *superView = [self.playerContentView superview];
+    //    UIView *superView = [self.playerContentView superview];
     if (orientation == UIDeviceOrientationPortrait) {
-
+        
         [self addSubview:self.playerContentView toSuperView:superView edge:UIEdgeInsetsZero];
         self.playerContentView.controlView.alpha = 0;
         [UIView animateWithDuration:0.3 animations:^{
-
+            
             self.playerContentView.bounds = superView.bounds;
             self.playerContentView.transform = CGAffineTransformMakeRotation(0);
             
         } completion:^(BOOL finished) {
             self.playerContentView.controlView.alpha = 1;
         }];
-
+        
     } else if (orientation == UIDeviceOrientationLandscapeRight) {
         
         float margin = (superView.frame.size.height - superView.frame.size.width)/2;
@@ -326,7 +355,7 @@
         } completion:^(BOOL finished) {
             self.playerContentView.controlView.alpha = 1;
         }];
-
+        
     } else if (orientation == UIDeviceOrientationLandscapeLeft) {
         
         float margin = (superView.frame.size.height - superView.frame.size.width)/2;
@@ -446,3 +475,4 @@
 //    }
 //}
 @end
+
