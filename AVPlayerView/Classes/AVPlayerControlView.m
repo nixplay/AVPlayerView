@@ -34,7 +34,9 @@
 
 + (AVPlayerControlView *)getControlView
 {
-    AVPlayerControlView *view = [[[NSBundle mainBundle] loadNibNamed:@"AVPlayerControlView" owner:nil options:nil] objectAtIndex:0];
+    NSBundle *bundle = [NSBundle bundleForClass:[AVPlayerControlView class]];
+    NSArray *views = [bundle loadNibNamed:@"AVPlayerControlView" owner:nil options:nil];
+    AVPlayerControlView *view = [views objectAtIndex:0];
     view.translatesAutoresizingMaskIntoConstraints = NO;
     return view;
 }
